@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(TUTEE)
+  isEmailVerified Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  profile         Profile?
+  tutoringRequests TutoringRequest[]
+  sentMessages    Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  reviewsGiven    Review[]  @relation("ReviewsGiven")
+  reviewsReceived Review[]  @relation("ReviewsReceived")
+  notifications   Notification[]
+  sessions        Session[] @relation("UserSessions")
+}
+
+enum Role {
+  TUTOR
+  TUTEE
+  BOTH
+}
+
+model Profile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName     String
+  bio             String?
+
+  selfReportedCourses String[]
+  areasOfExpertise    String[]
+  hourlyRate          Float?
+  availability        Json?
+
+  subjectsNeedingHelp String[]
+  preferredFormat     MeetingFormat @default(IN_PERSON)
+
+  verifiedBadges  VerifiedCourseBadge[]
+  applications    TutorApplication[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum MeetingFormat {
+  IN_PERSON
+  VIRTUAL
+  BOTH
+}
+
+model VerifiedCourseBadge {
+  id                String   @id @default(cuid())
+  profileId         String
+  profile           Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  courseCode        String
+  courseName        String
+  transcriptFileKey String
+  verifiedAt        DateTime @default(now())
+}
+
+model TutoringRequest {
+  id               String        @id @default(cuid())
+  tuteeId          String
+  tutee            User          @relation(fields: [tuteeId], references: [id])
+  courseSubject     String
+  topicDescription String
+  availabilitySlots Json
+  meetingFormat    MeetingFormat
+  budgetMin        Float
+  budgetMax        Float
+  status           RequestStatus @default(OPEN)
+
+  applications     TutorApplication[]
+  session          Session?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+model TutorApplication {
+  id          String            @id @default(cuid())
+  requestId   String
+  request     TutoringRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  tutorProfileId String
+  tutorProfile   Profile        @relation(fields: [tutorProfileId], references: [id])
+  matchScore  Float?
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+
+  @@unique([requestId, tutorProfileId])
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model MessageThread {
+  id          String    @id @default(cuid())
+  requestId   String?
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+}
+
+model Message {
+  id          String        @id @default(cuid())
+  threadId    String
+  thread      MessageThread @relation(fields: [threadId], references: [id])
+  senderId    String
+  sender      User          @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User          @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content     String
+  sentAt      DateTime      @default(now())
+}
+
+model Session {
+  id           String        @id @default(cuid())
+  requestId    String        @unique
+  request      TutoringRequest @relation(fields: [requestId], references: [id])
+  tutorId      String
+  tutor        User          @relation("UserSessions", fields: [tutorId], references: [id])
+  tuteeId      String
+  scheduledAt  DateTime
+  location     String?
+  format       MeetingFormat
+  status       SessionStatus @default(SCHEDULED)
+
+  reviews      Review[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id])
+  reviewerId  String
+  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating      Int
+  comment     String?
+  isFlagged   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
