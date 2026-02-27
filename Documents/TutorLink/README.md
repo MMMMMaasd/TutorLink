@@ -1,97 +1,128 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# TutorLink
 
-# Getting Started
+A peer-to-peer tutoring marketplace built for university students. Students can post tutoring requests as **Tutees** or apply to help others as **Tutors**. The platform handles the full workflow — from posting a request, getting matched with a tutor, messaging, scheduling sessions, all the way to leaving reviews.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Team B8
 
-## Step 1: Start Metro
+| Name | NetID | Role |
+|------|-------|------|
+| Alan Zhang | yz10074 | Front-End / UX |
+| Michael Bian | zb2253 | Back-End / Integration |
+| Erfu Hai | eh3323 | Data / Infrastructure |
+| David Rokicki | dr3492 | Backend Design / APIs |
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+> CS 4523 B — Senior Design Project, Spring 2026  
+> NYU Tandon School of Engineering
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Tech Stack
 
-```sh
-# Using npm
-npm start
+**Frontend**
+- React Native 0.84 + TypeScript
+- React Navigation (native-stack + bottom-tabs)
+- Axios for API calls
+- AsyncStorage for local token persistence
 
-# OR using Yarn
-yarn start
+**Backend**
+- Node.js + Express + TypeScript
+- PostgreSQL with Prisma ORM
+- JWT + bcrypt for authentication
+- RESTful API design
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 20
+- PostgreSQL running locally
+- Xcode (for iOS simulator)
+- CocoaPods
+
+### Backend Setup
+
+```bash
+cd backend
+npm install
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+Create a `.env` file under `backend/`:
+```
+DATABASE_URL="postgresql://<your_user>@localhost:5432/tutorlink?schema=public"
+JWT_SECRET="your-secret-here"
+PORT=3000
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+Run database migrations and start the dev server:
+```bash
+npx prisma migrate dev
+npm run dev
 ```
 
-Then, and every time you update your native dependencies, run:
+The API will be available at `http://localhost:3000/api`.
 
-```sh
-bundle exec pod install
+### Frontend Setup
+
+```bash
+# from project root
+npm install
+cd ios && pod install && cd ..
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+Start Metro bundler and run on iOS simulator:
+```bash
+npx react-native start --reset-cache
+npx react-native run-ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Project Structure
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```
+TutorLink/
+├── backend/
+│   ├── prisma/              # Database schema & migrations
+│   └── src/
+│       ├── config/           # Prisma client singleton
+│       ├── middleware/        # JWT auth middleware
+│       ├── modules/
+│       │   ├── auth/         # Registration, login, password reset
+│       │   ├── profile/      # User profiles, transcript badges
+│       │   ├── request/      # Tutoring requests & applications
+│       │   ├── matching/     # Tutor ranking algorithm
+│       │   ├── messaging/    # Message threads
+│       │   ├── scheduling/   # Session management & reminders
+│       │   └── review/       # Ratings & flagging
+│       └── server.ts
+└── src/                      # React Native frontend
+    ├── api/                  # Axios client with interceptors
+    ├── context/              # Auth state (Context + useReducer)
+    ├── navigation/           # Stack & tab navigators
+    ├── screens/              # All app screens
+    ├── types/                # Shared TypeScript interfaces
+    └── utils/                # Storage helpers
+```
 
-## Step 3: Modify your app
+## Features
 
-Now that you have successfully run the app, let's make changes!
+- **Email-gated registration** — only `.edu` emails allowed
+- **Dual roles** — users can be a Tutor, Tutee, or Both
+- **Tutoring requests** — post what you need help with, including subject, availability, format preference (in-person / virtual), and budget range
+- **Smart matching** — weighted scoring algorithm that factors in expertise overlap, schedule compatibility, format preference, budget fit, and tutor ratings
+- **In-app messaging** — private threads opened after a tutor application is accepted
+- **Session scheduling** — book sessions with calendar view, automatic reminders 24h before
+- **Review system** — mutual ratings after completed sessions, with flagging for moderation
+- **Verified course badges** — tutors can upload transcript evidence for specific courses (files are never exposed to other users)
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## API Endpoints
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+| Prefix | Module |
+|--------|--------|
+| `/api/auth` | Registration, login, password reset |
+| `/api/profiles` | Profile CRUD, transcript upload |
+| `/api/requests` | Request lifecycle, applications |
+| `/api/matching` | Tutor ranking, notifications |
+| `/api/messaging` | Threads, messages |
+| `/api/scheduling` | Sessions, reminders |
+| `/api/reviews` | Ratings, flagging |
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## License
 
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+This project is part of a university course and is not intended for commercial use.
